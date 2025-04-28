@@ -2,9 +2,7 @@
 import { Command } from "@/data/commands";
 import { useCommand } from "@/providers/CommandProvider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Info, ArrowRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Info } from "lucide-react";
 import { useEffect } from "react";
 
 interface CommandDetailsProps {
@@ -12,19 +10,8 @@ interface CommandDetailsProps {
 }
 
 export default function CommandDetails({ command }: CommandDetailsProps) {
-  const { completedCommands, getNextAvailableCommand } = useCommand();
-  const navigate = useNavigate();
+  const { completedCommands } = useCommand();
   const isCompleted = completedCommands.includes(command.id);
-
-  const handleNextCommand = () => {
-    const nextCommand = getNextAvailableCommand(command.id);
-    console.log("Next command:", nextCommand);
-    if (nextCommand) {
-      navigate(`/command/${nextCommand.id}`);
-    } else {
-      console.log("No next command available");
-    }
-  };
 
   // Debug logging to check completion status
   useEffect(() => {
@@ -48,18 +35,6 @@ export default function CommandDetails({ command }: CommandDetailsProps) {
             Complete this command's exercises to unlock the next command
           </AlertDescription>
         </Alert>
-      )}
-      
-      {isCompleted && (
-        <div className="mb-6 flex justify-end">
-          <Button 
-            onClick={handleNextCommand} 
-            className="flex items-center gap-2"
-          >
-            Next Command
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        </div>
       )}
       
       <div className="space-y-6">

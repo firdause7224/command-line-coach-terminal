@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { useCommand } from "@/providers/CommandProvider";
 import { Command } from "@/data/commands";
 import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface TerminalProps {
   command: Command;
@@ -11,8 +13,9 @@ interface TerminalProps {
 export default function Terminal({ command }: TerminalProps) {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState<{ text: string; type: string }[]>([]);
-  const { markCommandAsCompleted, completedCommands } = useCommand();
+  const { markCommandAsCompleted, completedCommands, getNextAvailableCommand } = useCommand();
   const isCompleted = completedCommands.includes(command.id);
+  const navigate = useNavigate();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
@@ -36,6 +39,16 @@ export default function Terminal({ command }: TerminalProps) {
     }
     
     setInput("");
+  };
+
+  const handleNextCommand = () => {
+    const nextCommand = getNextAvailableCommand(command.id);
+    console.log("Next command:", nextCommand);
+    if (nextCommand) {
+      navigate(`/command/${nextCommand.id}`);
+    } else {
+      console.log("No next command available");
+    }
   };
 
   return (
@@ -68,7 +81,17 @@ export default function Terminal({ command }: TerminalProps) {
       
       {isCompleted && (
         <div className="mt-4 p-2 bg-green-950/30 text-green-400 rounded border border-green-700">
-          Command completed successfully! You can now proceed to the next command.
+          <div className="flex items-center justify-between">
+            <span>Command completed successfully!</span>
+            <Button 
+              onClick={handleNextCommand} 
+              className="flex items-center gap-2 text-sm bg-green-700 hover:bg-green-800"
+              size="sm"
+            >
+              Next Command
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       )}
     </div>
