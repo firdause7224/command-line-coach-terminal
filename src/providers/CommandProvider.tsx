@@ -9,6 +9,7 @@ type CommandContextType = {
   setActiveCommand: (id: string | null) => void;
   markCommandAsCompleted: (id: string) => void;
   isCommandAvailable: (id: string) => boolean;
+  getNextAvailableCommand: (currentCommandId: string) => typeof commandsData[0] | null;
 };
 
 const CommandContext = createContext<CommandContextType | undefined>(undefined);
@@ -31,6 +32,14 @@ export function CommandProvider({ children }: { children: React.ReactNode }) {
     return previousCommand ? completedCommands.includes(previousCommand.id) : true;
   };
 
+  const getNextAvailableCommand = (currentCommandId: string) => {
+    const currentIndex = commandsData.findIndex(cmd => cmd.id === currentCommandId);
+    if (currentIndex === -1 || currentIndex >= commandsData.length - 1) return null;
+    
+    const nextCommand = commandsData[currentIndex + 1];
+    return nextCommand;
+  };
+
   const value = {
     commands: commandsData,
     activeCommand,
@@ -38,6 +47,7 @@ export function CommandProvider({ children }: { children: React.ReactNode }) {
     setActiveCommand,
     markCommandAsCompleted,
     isCommandAvailable,
+    getNextAvailableCommand,
   };
 
   return <CommandContext.Provider value={value}>{children}</CommandContext.Provider>;
