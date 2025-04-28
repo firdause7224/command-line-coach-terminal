@@ -20,7 +20,8 @@ export function CommandProvider({ children }: { children: React.ReactNode }) {
 
   const markCommandAsCompleted = (id: string) => {
     if (!completedCommands.includes(id)) {
-      setCompletedCommands([...completedCommands, id]);
+      setCompletedCommands(prev => [...prev, id]);
+      console.log(`Command ${id} marked as completed. All completed:`, [...completedCommands, id]);
     }
   };
 

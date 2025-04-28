@@ -5,22 +5,32 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Info, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 interface CommandDetailsProps {
   command: Command;
 }
 
 export default function CommandDetails({ command }: CommandDetailsProps) {
-  const { completedCommands, commands, getNextAvailableCommand } = useCommand();
+  const { completedCommands, getNextAvailableCommand } = useCommand();
   const navigate = useNavigate();
   const isCompleted = completedCommands.includes(command.id);
 
   const handleNextCommand = () => {
     const nextCommand = getNextAvailableCommand(command.id);
+    console.log("Next command:", nextCommand);
     if (nextCommand) {
       navigate(`/command/${nextCommand.id}`);
+    } else {
+      console.log("No next command available");
     }
   };
+
+  // Debug logging to check completion status
+  useEffect(() => {
+    console.log(`Command ${command.id} completion status:`, isCompleted);
+    console.log("All completed commands:", completedCommands);
+  }, [command.id, isCompleted, completedCommands]);
 
   return (
     <div className="p-6 bg-card rounded-md border border-border">
@@ -42,7 +52,10 @@ export default function CommandDetails({ command }: CommandDetailsProps) {
       
       {isCompleted && (
         <div className="mb-6 flex justify-end">
-          <Button onClick={handleNextCommand} className="flex items-center gap-2">
+          <Button 
+            onClick={handleNextCommand} 
+            className="flex items-center gap-2"
+          >
             Next Command
             <ArrowRight className="h-4 w-4" />
           </Button>

@@ -9,19 +9,21 @@ import NotFound from "./NotFound";
 
 const CommandPage = () => {
   const { commandId } = useParams<{ commandId: string }>();
-  const { commands, setActiveCommand } = useCommand();
+  const { commands, setActiveCommand, completedCommands } = useCommand();
   
   const currentCommand = commands.find(cmd => cmd.id === commandId);
   
   useEffect(() => {
     if (commandId) {
       setActiveCommand(commandId);
+      console.log(`Active command set to: ${commandId}`);
+      console.log(`Completed commands: ${completedCommands.join(', ')}`);
     }
     
     return () => {
       setActiveCommand(null);
     };
-  }, [commandId, setActiveCommand]);
+  }, [commandId, setActiveCommand, completedCommands]);
   
   if (!currentCommand) {
     return <NotFound />;

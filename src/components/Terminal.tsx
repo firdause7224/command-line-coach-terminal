@@ -1,126 +1,76 @@
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
+import { useCommand } from "@/providers/CommandProvider";
 import { Command } from "@/data/commands";
+import { Button } from "@/components/ui/button";
 
 interface TerminalProps {
   command: Command;
 }
 
-interface TerminalLine {
-  input?: string;
-  outputs?: {
-    text: string;
-    type: "standard" | "error" | "success";
-  }[];
-  isCommand: boolean;
-}
-
 export default function Terminal({ command }: TerminalProps) {
-  const [terminalLines, setTerminalLines] = useState<TerminalLine[]>([
-    { isCommand: false, outputs: [{ text: `Welcome to the interactive terminal! Try using the '${command.name}' command.`, type: "standard" }] }
-  ]);
-  const [currentInput, setCurrentInput] = useState("");
-  const terminalRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const focusInput = () => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  };
-
-  const scrollToBottom = () => {
-    if (terminalRef.current) {
-      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
-    }
-  };
+  const [input, setInput] = useState("");
+  const [output, setOutput] = useState<{ text: string; type: string }[]>([]);
+  const { markCommandAsCompleted, completedCommands } = useCommand();
+  const isCompleted = completedCommands.includes(command.id);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCurrentInput(e.target.value);
+    setInput(e.target.value);
   };
 
-  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && currentInput.trim() !== "") {
-      processCommand(currentInput.trim());
-      setCurrentInput("");
-    }
-  };
-
-  const processCommand = (input: string) => {
-    const newLine: TerminalLine = { input, isCommand: true };
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     
-    // Check if the command is allowed
+    // Check if the input command is allowed
     if (command.allowedCommands.includes(input)) {
-      newLine.outputs = command.output[input] || [{
-        text: "Command executed but no output defined.",
-        type: "standard"
-      }];
-    } else if (input.startsWith(command.name)) {
-      newLine.outputs = [{
-        text: `Invalid use of '${command.name}'. Try one of the examples.`,
-        type: "error"
-      }];
+      // Get the output for this command
+      const commandOutput = command.output[input] || [{ text: "Command not recognized", type: "error" }];
+      setOutput(commandOutput);
+      
+      // Mark command as completed
+      markCommandAsCompleted(command.id);
+      
+      console.log(`Command ${command.id} marked as completed`);
     } else {
-      newLine.outputs = [{
-        text: `This terminal is focused on the '${command.name}' command. Try using '${command.name}' with appropriate options.`,
-        type: "error"
-      }];
+      setOutput([{ text: `Command not allowed. Try one of: ${command.allowedCommands.join(", ")}`, type: "error" }]);
     }
     
-    setTerminalLines([...terminalLines, newLine]);
+    setInput("");
   };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [terminalLines]);
-
-  useEffect(() => {
-    focusInput();
-  }, []);
 
   return (
-    <div 
-      className="terminal" 
-      ref={terminalRef} 
-      onClick={focusInput}
-      role="textbox"
-      tabIndex={0}
-    >
-      {terminalLines.map((line, index) => (
-        <div key={index} className="mb-1">
-          {line.isCommand && (
-            <div className="flex">
-              <span className="command-prompt">$</span>
-              <span className="command-text">{line.input}</span>
-            </div>
-          )}
-          
-          {line.outputs && line.outputs.map((output, i) => (
-            <div key={i} className={`command-${output.type}`}>
-              {output.text.split('\n').map((text, j) => (
-                <div key={j}>{text}</div>
-              ))}
-            </div>
-          ))}
-        </div>
-      ))}
-      
-      <div className="flex mt-2">
-        <span className="command-prompt">$</span>
-        <input
-          ref={inputRef}
-          type="text"
-          value={currentInput}
-          onChange={handleInputChange}
-          onKeyDown={handleInputKeyDown}
-          className="terminal-input"
-          aria-label="Terminal input"
-          autoFocus
-          autoComplete="off"
-          spellCheck="false"
-        />
-        <span className="cursor"></span>
+    <div className="border border-border rounded-md bg-black text-green-400 font-mono text-sm p-4">
+      <div className="min-h-40 max-h-60 overflow-y-auto mb-4">
+        {output.map((line, index) => (
+          <div 
+            key={index}
+            className={line.type === "error" ? "text-red-400" : line.type === "success" ? "text-green-500" : ""}
+          >
+            {line.text}
+          </div>
+        ))}
       </div>
+      
+      <form onSubmit={handleSubmit} className="flex items-center">
+        <span className="mr-2">$</span>
+        <input
+          type="text"
+          value={input}
+          onChange={handleInputChange}
+          className="flex-1 bg-transparent border-none outline-none"
+          placeholder="Type command here..."
+          autoFocus
+        />
+        <Button type="submit" variant="ghost" size="sm" className="text-terminal-green">
+          Run
+        </Button>
+      </form>
+      
+      {isCompleted && (
+        <div className="mt-4 p-2 bg-green-950/30 text-green-400 rounded border border-green-700">
+          Command completed successfully! You can now proceed to the next command.
+        </div>
+      )}
     </div>
   );
 }
