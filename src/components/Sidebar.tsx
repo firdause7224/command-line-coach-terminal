@@ -4,10 +4,11 @@ import { commandCategories, commandsData } from "@/data/commands";
 import { useState } from "react";
 import { useCommand } from "@/providers/CommandProvider";
 import { Terminal, Command, Folder, FileText, Info } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function Sidebar() {
   const navigate = useNavigate();
-  const { activeCommand, setActiveCommand } = useCommand();
+  const { activeCommand, setActiveCommand, completedCommands, isCommandAvailable } = useCommand();
   const [expandedCategories, setExpandedCategories] = useState<string[]>(
     commandCategories.map(cat => cat.id)
   );
@@ -21,6 +22,7 @@ export default function Sidebar() {
   };
 
   const handleCommandClick = (commandId: string) => {
+    if (!isCommandAvailable(commandId)) return;
     setActiveCommand(commandId);
     navigate(`/command/${commandId}`);
   };
@@ -65,17 +67,29 @@ export default function Sidebar() {
               <div className="ml-4 mt-1 space-y-1">
                 {commandsData
                   .filter(cmd => cmd.category === category.id)
-                  .map(command => (
-                    <div
-                      key={command.id}
-                      className={`sidebar-item ${activeCommand === command.id ? "active" : ""}`}
-                      onClick={() => handleCommandClick(command.id)}
-                    >
-                      <Terminal className="w-4 h-4" />
-                      <span>{command.name}</span>
-                    </div>
-                  ))
-                }
+                  .map(command => {
+                    const isAvailable = isCommandAvailable(command.id);
+                    const isCompleted = completedCommands.includes(command.id);
+                    
+                    return (
+                      <div
+                        key={command.id}
+                        className={cn(
+                          "sidebar-item",
+                          activeCommand === command.id ? "active" : "",
+                          !isAvailable ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
+                          isCompleted ? "text-green-500" : ""
+                        )}
+                        onClick={() => handleCommandClick(command.id)}
+                      >
+                        <Terminal className="w-4 h-4" />
+                        <span>{command.name}</span>
+                        {isCompleted && (
+                          <span className="ml-auto text-xs">✓</span>
+                        )}
+                      </div>
+                    );
+                  })}
               </div>
             )}
           </div>
